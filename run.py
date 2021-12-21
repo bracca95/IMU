@@ -1,8 +1,12 @@
-import ahrs
 import matplotlib.pyplot as plt
 
+from scipy.signal import savgol_filter
+from ahrs.filters.madgwick import Madgwick
+
 from src.parser import Parser
-from src.processing import Gyro, Accl
+from src.processing import Sensor, Gyro, Accl
+from src.utils import Plotter
+
 
 if __name__=="__main__":
     parser = Parser("config/config.json")
@@ -10,16 +14,11 @@ if __name__=="__main__":
 
     sensor_accl = Accl(args['accl_path'], args['sampl_hz'])
     sensor_gyro = Gyro(args['gyro_path'], args['sampl_hz'])
-    
-    accl_arr = sensor_accl.nx3_array('ACCL_X', 'ACCL_Y', 'ACCL_Z')
-    gyro_arr = sensor_gyro.nx3_array('GYRO_X', 'GYRO_Y', 'GYRO_Z')
 
-    filter = ahrs.filters.madgwick.Madgwick(gyro_arr, accl_arr, frequency=args['sampl_hz'])
+    orient = Madgwick(sensor_gyro.nx3_array(), sensor_accl.nx3_array(), frequency=args['sampl_hz'])
+    orient_filt = [savgol_filter(orient.Q[:, i], 301, 3) for i in range(4)]
+    rpy = Sensor.get_rpy(orient)
+    rpy_filt = [savgol_filter(angle, 301, 3) for angle in rpy]
 
-    plt.plot(range(len(filter.Q[:, 0])), filter.Q[:, 0])
-    plt.plot(range(len(filter.Q[:, 0])), filter.Q[:, 1])
-    plt.plot(range(len(filter.Q[:, 0])), filter.Q[:, 2])
-    plt.plot(range(len(filter.Q[:, 0])), filter.Q[:, 3])
-    plt.show()
-
-    print(args)
+    Plotter.plot(orient.Q[:, 0], orient.Q[:, 1], orient.Q[:, 2], orient.Q[:, 3], a='qw', b='qx', c='qy', d='qz', fps=args['sampl_hz'])
+    Plotter.plot(rpy[0], rpy[1], rpy[2], a='roll', b='pitch', c='yaw', fps=args['sampl_hz'])

@@ -2,6 +2,9 @@ import os
 import re
 import sys
 import logging
+import numpy as np
+import matplotlib.pyplot as plt
+
 
 class Utils:
 
@@ -77,3 +80,26 @@ class Logger:
         self.logger.addHandler(err_handler)
 
 
+class Plotter:
+
+    fignum = 0
+    colors = ['k', 'b', 'green', 'orange', 'red', 'cyan', 'lime']
+
+    @staticmethod
+    def plot(*args, **kwargs):
+        fig = plt.figure(Plotter.fignum)
+        fig.set_figwidth(20)
+
+        for k, v in kwargs.items():
+            if k == 'fps': fps = v
+
+        i = 0
+        for arg, kwarg in zip(args, kwargs.values()):
+            x_range = np.linspace(0, int(len(arg)/fps), len(arg))
+            plt.plot(range(len(arg)), arg, color=Plotter.colors[i], label=kwarg)
+            i += 1
+
+        plt.legend()
+        plt.locator_params(axis='x', nbins=int(len(arg)/fps) / 10)
+        plt.show()
+        Plotter.fignum += 1

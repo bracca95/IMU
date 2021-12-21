@@ -1,4 +1,7 @@
+src/__pycache__/
 .DS_Store
-data/
 .vscode
-.log
+config/Lo.txt
+data/
+*.log
+src/__pycache__/
